@@ -44,6 +44,13 @@ struct State {
 }
 
 impl State {
+    fn new(context: web_sys::CanvasRenderingContext2d) -> Self {
+        let player = Player {
+            position: Point::new(10., 10.),
+        };
+        Self { context, player }
+    }
+
     fn update(&mut self, _timestamp: i32) {
         if let Some(key_code) = unsafe { GLOBAL_KEY } {
             match key_code {
@@ -102,10 +109,7 @@ pub fn start() {
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
         .unwrap();
 
-    let player = Player {
-        position: Point::new(10., 10.),
-    };
-    let mut state = State { context, player };
+    let mut state = State::new(context);
 
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move |timestamp| {
         state.update(timestamp);
