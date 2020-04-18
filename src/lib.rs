@@ -84,7 +84,7 @@ impl State {
 
 #[wasm_bindgen(start)]
 pub fn start() {
-    std::panic::set_hook(Box::new(console_error_panic_hook::hook));
+    console_error_panic_hook::set_once();
 
     let f = Rc::new(RefCell::new(None));
     let g = f.clone();
