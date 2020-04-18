@@ -71,6 +71,10 @@ impl State {
             log!("{:?}", unsafe { GLOBAL_KEY });
         }
 
+        // Clamp velocity
+        self.player.velocity.y = clamp(self.player.velocity.y, -3., 3.);
+        self.player.velocity.x = clamp(self.player.velocity.x, -3., 3.);
+
         // Apply velocity
         self.player.position.y += self.player.velocity.y;
         self.player.position.x += self.player.velocity.x;
@@ -149,6 +153,10 @@ pub fn start() {
     onkeyup_handler.forget();
 
     request_animation_frame(g.borrow().as_ref().unwrap());
+}
+
+fn clamp(x: f32, min: f32, max: f32) -> f32 {
+    x.max(min).min(max)
 }
 
 #[wasm_bindgen]
