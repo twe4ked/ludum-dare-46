@@ -3,6 +3,9 @@ use std::f64;
 use std::rc::Rc;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
+use web_sys::KeyboardEvent;
+
+static mut GLOBAL_KEY: Option<u32> = None;
 
 fn window() -> web_sys::Window {
     web_sys::window().expect("no global `window` exists")
@@ -41,6 +44,19 @@ struct State {
 }
 
 impl State {
+    fn update(&mut self) {
+        if let Some(key_code) = unsafe { GLOBAL_KEY } {
+            match key_code {
+                87 => self.player.position.y -= 1., // up
+                83 => self.player.position.y += 1., // down
+                65 => self.player.position.x -= 1., // left
+                68 => self.player.position.x += 1., // right
+                _ => {}
+            }
+            log!("{:?}", unsafe { GLOBAL_KEY });
+        }
+    }
+
     fn draw(&self) {
         self.context.clear_rect(
             0.,
@@ -89,14 +105,27 @@ pub fn start() {
     let player = Player {
         position: Point::new(10., 10.),
     };
-    let state = State { context, player };
+    let mut state = State { context, player };
 
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
+        state.update();
         state.draw();
 
         // Schedule ourself for another requestAnimationFrame callback.
         request_animation_frame(f.borrow().as_ref().unwrap());
     }) as Box<dyn FnMut()>));
+
+    let onkeydown_handler = Closure::wrap(Box::new(move |e: KeyboardEvent| unsafe {
+        GLOBAL_KEY = Some(e.key_code());
+    }) as Box<dyn FnMut(KeyboardEvent)>);
+    window().set_onkeydown(Some(onkeydown_handler.as_ref().unchecked_ref()));
+    onkeydown_handler.forget();
+
+    let onkeyup_handler = Closure::wrap(Box::new(move |_e: KeyboardEvent| unsafe {
+        GLOBAL_KEY = None;
+    }) as Box<dyn FnMut(KeyboardEvent)>);
+    window().set_onkeyup(Some(onkeyup_handler.as_ref().unchecked_ref()));
+    onkeyup_handler.forget();
 
     request_animation_frame(g.borrow().as_ref().unwrap());
 }
