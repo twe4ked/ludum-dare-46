@@ -104,6 +104,18 @@ impl State {
         // Gravity
         self.player.velocity.y += 0.1;
 
+        // Friction
+        if self.player.velocity.x > 0. {
+            // moving right
+            self.player.velocity.x -= 0.1;
+            self.player.velocity.x = clamp(self.player.velocity.x, 0., 3.);
+        }
+        if self.player.velocity.x < 0. {
+            // moving left
+            self.player.velocity.x += 0.1;
+            self.player.velocity.x = clamp(self.player.velocity.x, -3., 0.);
+        }
+
         // Clamp velocity
         self.player.velocity.y = clamp(self.player.velocity.y, -3., 3.);
         self.player.velocity.x = clamp(self.player.velocity.x, -3., 3.);
