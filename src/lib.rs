@@ -103,3 +103,17 @@ pub fn start() {
 
     request_animation_frame(g.borrow().as_ref().unwrap());
 }
+
+#[wasm_bindgen]
+extern "C" {
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn log_str(s: &str);
+
+    #[wasm_bindgen(js_namespace = console, js_name = log)]
+    fn log_val(v: &wasm_bindgen::JsValue);
+}
+
+#[macro_export]
+macro_rules! log {
+    ($($t:tt)*) => (crate::log_str(&format_args!($($t)*).to_string()))
+}
