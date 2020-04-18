@@ -51,6 +51,7 @@ struct Player {
     velocity: Point,
     width: f32,
     height: f32,
+    jumping: f32,
 }
 
 #[derive(Debug)]
@@ -68,6 +69,7 @@ impl State {
             velocity: Point::new(0., 0.),
             width: 60.,
             height: 60.,
+            jumping: 0.,
         };
         let floor = Block {
             position: Point::new(0., HEIGHT as f32 - 22.),
@@ -92,7 +94,19 @@ impl State {
 
         if let Some(key_code) = unsafe { GLOBAL_KEY } {
             match key_code {
-                87 => self.player.velocity.y -= 1., // up
+                87 => {
+                    // up
+
+                    // We're not jumping, so we can start jumping
+                    if self.player.jumping == 0. {
+                        self.player.jumping = 120.;
+                    }
+
+                    if self.player.jumping > 100. {
+                        // keep adding velocity
+                        self.player.velocity.y -= 10.;
+                    }
+                }
                 83 => self.player.velocity.y += 1., // down
                 65 => self.player.velocity.x -= 1., // left
                 68 => self.player.velocity.x += 1., // right
@@ -100,6 +114,9 @@ impl State {
             }
             log!("{:?}", unsafe { GLOBAL_KEY });
         }
+
+        // Jumping
+        self.player.jumping = clamp(self.player.jumping - 1.0, 0., 120.);
 
         // Gravity
         self.player.velocity.y += 0.1;
