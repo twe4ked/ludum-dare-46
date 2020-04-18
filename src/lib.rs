@@ -11,7 +11,7 @@ fn window() -> web_sys::Window {
     web_sys::window().expect("no global `window` exists")
 }
 
-fn request_animation_frame(f: &Closure<dyn FnMut()>) {
+fn request_animation_frame(f: &Closure<dyn FnMut(i32)>) {
     window()
         .request_animation_frame(f.as_ref().unchecked_ref())
         .expect("should register `requestAnimationFrame` OK");
@@ -44,7 +44,7 @@ struct State {
 }
 
 impl State {
-    fn update(&mut self) {
+    fn update(&mut self, _timestamp: i32) {
         if let Some(key_code) = unsafe { GLOBAL_KEY } {
             match key_code {
                 87 => self.player.position.y -= 1., // up
@@ -107,13 +107,13 @@ pub fn start() {
     };
     let mut state = State { context, player };
 
-    *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-        state.update();
+    *g.borrow_mut() = Some(Closure::wrap(Box::new(move |timestamp| {
+        state.update(timestamp);
         state.draw();
 
         // Schedule ourself for another requestAnimationFrame callback.
         request_animation_frame(f.borrow().as_ref().unwrap());
-    }) as Box<dyn FnMut()>));
+    }) as Box<dyn FnMut(i32)>));
 
     let onkeydown_handler = Closure::wrap(Box::new(move |e: KeyboardEvent| unsafe {
         GLOBAL_KEY = Some(e.key_code());
