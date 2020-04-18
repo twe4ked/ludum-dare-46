@@ -26,6 +26,7 @@ fn document() -> web_sys::Document {
         .expect("should have a document on window")
 }
 
+#[derive(Debug)]
 struct Point {
     x: f32,
     y: f32,
@@ -37,12 +38,14 @@ impl Point {
     }
 }
 
+#[derive(Debug)]
 struct Block {
     position: Point,
     width: f32,
     height: f32,
 }
 
+#[derive(Debug)]
 struct Player {
     position: Point,
     velocity: Point,
@@ -50,6 +53,7 @@ struct Player {
     height: f32,
 }
 
+#[derive(Debug)]
 struct State {
     context: web_sys::CanvasRenderingContext2d,
     player: Player,
