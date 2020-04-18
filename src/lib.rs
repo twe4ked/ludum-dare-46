@@ -24,8 +24,57 @@ fn body() -> web_sys::HtmlElement {
     document().body().expect("document should have a body")
 }
 
+struct Point {
+    x: f64,
+    y: f64,
+}
+
+impl Point {
+    fn new(x: f64, y: f64) -> Self {
+        Self { x, y }
+    }
+}
+
 struct State {
     context: web_sys::CanvasRenderingContext2d,
+}
+
+impl State {
+    fn draw(&self) {
+        self.context.clear_rect(
+            0.,
+            0.,
+            self.context.canvas().unwrap().width() as f64,
+            self.context.canvas().unwrap().height() as f64,
+        );
+
+        self.context.begin_path();
+
+        // Draw the outer circle.
+        self.context
+            .arc(75.0, 75.0, 50.0, 0.0, f64::consts::PI * 2.0)
+            .unwrap();
+
+        // Draw the mouth.
+        self.context.move_to(110.0, 75.0);
+        self.context
+            .arc(75.0, 75.0, 35.0, 0.0, f64::consts::PI)
+            .unwrap();
+
+        // Draw the left eye.
+        self.context.move_to(65.0, 65.0);
+        self.context
+            .arc(60.0, 65.0, 5.0, 0.0, f64::consts::PI * 2.0)
+            .unwrap();
+
+        // Draw the right eye.
+        self.context.move_to(95.0, 65.0);
+        self.context
+            .arc(90.0, 65.0, 5.0, 0.0, f64::consts::PI * 2.0)
+            .unwrap();
+
+        self.context.stroke();
+    }
 }
 
 #[wasm_bindgen(start)]
@@ -50,43 +99,7 @@ pub fn start() {
     let state = State { context };
 
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
-        state.context.clear_rect(
-            0.,
-            0.,
-            state.context.canvas().unwrap().width() as f64,
-            state.context.canvas().unwrap().height() as f64,
-        );
-
-        state.context.begin_path();
-
-        // Draw the outer circle.
-        state
-            .context
-            .arc(75.0, 75.0, 50.0, 0.0, f64::consts::PI * 2.0)
-            .unwrap();
-
-        // Draw the mouth.
-        state.context.move_to(110.0, 75.0);
-        state
-            .context
-            .arc(75.0, 75.0, 35.0, 0.0, f64::consts::PI)
-            .unwrap();
-
-        // Draw the left eye.
-        state.context.move_to(65.0, 65.0);
-        state
-            .context
-            .arc(60.0, 65.0, 5.0, 0.0, f64::consts::PI * 2.0)
-            .unwrap();
-
-        // Draw the right eye.
-        state.context.move_to(95.0, 65.0);
-        state
-            .context
-            .arc(90.0, 65.0, 5.0, 0.0, f64::consts::PI * 2.0)
-            .unwrap();
-
-        state.context.stroke();
+        state.draw();
 
         // Schedule ourself for another requestAnimationFrame callback.
         request_animation_frame(f.borrow().as_ref().unwrap());
