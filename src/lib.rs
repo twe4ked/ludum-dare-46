@@ -46,6 +46,8 @@ struct Block {
 struct Player {
     position: Point,
     velocity: Point,
+    width: f32,
+    height: f32,
 }
 
 struct State {
@@ -59,6 +61,8 @@ impl State {
         let player = Player {
             position: Point::new(10., 10.),
             velocity: Point::new(0., 0.),
+            width: 60.,
+            height: 60.,
         };
         let floor = Block {
             position: Point::new(0., HEIGHT as f32 - 22.),
@@ -102,17 +106,12 @@ impl State {
         );
 
         // Draw player
-        self.context.begin_path();
-        self.context
-            .arc(
-                self.player.position.x as f64 + 50.0,
-                self.player.position.y as f64 + 50.0,
-                50.0,
-                0.0,
-                f64::consts::PI * 2.0,
-            )
-            .unwrap();
-        self.context.stroke();
+        self.context.fill_rect(
+            self.player.position.x as f64,
+            self.player.position.y as f64,
+            self.player.width as f64,
+            self.player.height as f64,
+        );
 
         // Draw floor
         self.context.fill_rect(
