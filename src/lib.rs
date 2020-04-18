@@ -7,6 +7,9 @@ use web_sys::KeyboardEvent;
 
 static mut GLOBAL_KEY: Option<u32> = None;
 
+const WIDTH: i32 = 800;
+const HEIGHT: i32 = 600;
+
 fn window() -> web_sys::Window {
     web_sys::window().expect("no global `window` exists")
 }
@@ -106,6 +109,8 @@ pub fn start() {
     let g = f.clone();
 
     let canvas = document().get_element_by_id("canvas").unwrap();
+    canvas.set_attribute("width", &format!("{}", WIDTH));
+    canvas.set_attribute("height", &format!("{}", HEIGHT));
     let canvas: web_sys::HtmlCanvasElement = canvas
         .dyn_into::<web_sys::HtmlCanvasElement>()
         .map_err(|_| ())
