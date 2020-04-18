@@ -37,6 +37,12 @@ impl Point {
     }
 }
 
+struct Block {
+    position: Point,
+    width: f32,
+    height: f32,
+}
+
 struct Player {
     position: Point,
     velocity: Point,
@@ -45,6 +51,7 @@ struct Player {
 struct State {
     context: web_sys::CanvasRenderingContext2d,
     player: Player,
+    floor: Block,
 }
 
 impl State {
@@ -53,9 +60,15 @@ impl State {
             position: Point::new(10., 10.),
             velocity: Point::new(0., 0.),
         };
+        let floor = Block {
+            position: Point::new(0., HEIGHT as f32 - 22.),
+            width: WIDTH as f32,
+            height: 20.,
+        };
         Self {
             context,
             player,
+            floor,
         }
     }
 
@@ -88,9 +101,8 @@ impl State {
             self.context.canvas().unwrap().height() as f64,
         );
 
+        // Draw player
         self.context.begin_path();
-
-        // Draw the outer circle.
         self.context
             .arc(
                 self.player.position.x as f64 + 50.0,
@@ -100,8 +112,15 @@ impl State {
                 f64::consts::PI * 2.0,
             )
             .unwrap();
-
         self.context.stroke();
+
+        // Draw floor
+        self.context.fill_rect(
+            self.floor.position.x as f64,
+            self.floor.position.y as f64,
+            self.floor.width as f64,
+            self.floor.height as f64,
+        )
     }
 }
 
