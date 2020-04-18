@@ -20,10 +20,6 @@ fn document() -> web_sys::Document {
         .expect("should have a document on window")
 }
 
-fn body() -> web_sys::HtmlElement {
-    document().body().expect("document should have a body")
-}
-
 struct Point {
     x: f64,
     y: f64,
@@ -75,8 +71,7 @@ pub fn start() {
     let f = Rc::new(RefCell::new(None));
     let g = f.clone();
 
-    let document = web_sys::window().unwrap().document().unwrap();
-    let canvas = document.get_element_by_id("canvas").unwrap();
+    let canvas = document().get_element_by_id("canvas").unwrap();
     let canvas: web_sys::HtmlCanvasElement = canvas
         .dyn_into::<web_sys::HtmlCanvasElement>()
         .map_err(|_| ())
