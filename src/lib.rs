@@ -101,6 +101,9 @@ impl State {
             log!("{:?}", unsafe { GLOBAL_KEY });
         }
 
+        // Gravity
+        self.player.velocity.y += 0.1;
+
         // Clamp velocity
         self.player.velocity.y = clamp(self.player.velocity.y, -3., 3.);
         self.player.velocity.x = clamp(self.player.velocity.x, -3., 3.);
@@ -108,6 +111,20 @@ impl State {
         // Apply velocity
         self.player.position.y += self.player.velocity.y;
         self.player.position.x += self.player.velocity.x;
+
+        if collision(
+            self.player.position.x,
+            self.player.position.y,
+            self.player.width,
+            self.player.height,
+            self.floor.position.x,
+            self.floor.position.y,
+            self.floor.width,
+            self.floor.height,
+        ) {
+            self.player.position.y -= self.player.velocity.y;
+            self.player.velocity.y = 0.0;
+        }
     }
 
     fn draw(&self) {
@@ -136,6 +153,19 @@ impl State {
 
         ()
     }
+}
+
+fn collision(
+    r1x: f32,
+    r1y: f32,
+    r1w: f32,
+    r1h: f32,
+    r2x: f32,
+    r2y: f32,
+    r2w: f32,
+    r2h: f32,
+) -> bool {
+    r1x < r2x + r2w && r1x + r1w > r2x && r1y < r2y + r2h && r1y + r1h > r2y
 }
 
 #[wasm_bindgen(start)]
