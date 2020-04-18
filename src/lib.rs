@@ -36,6 +36,7 @@ impl Point {
 
 struct Player {
     position: Point,
+    velocity: Point,
 }
 
 struct State {
@@ -47,21 +48,29 @@ impl State {
     fn new(context: web_sys::CanvasRenderingContext2d) -> Self {
         let player = Player {
             position: Point::new(10., 10.),
+            velocity: Point::new(0., 0.),
         };
-        Self { context, player }
+        Self {
+            context,
+            player,
+        }
     }
 
     fn update(&mut self, _timestamp: i32) {
         if let Some(key_code) = unsafe { GLOBAL_KEY } {
             match key_code {
-                87 => self.player.position.y -= 1., // up
-                83 => self.player.position.y += 1., // down
-                65 => self.player.position.x -= 1., // left
-                68 => self.player.position.x += 1., // right
+                87 => self.player.velocity.y -= 1., // up
+                83 => self.player.velocity.y += 1., // down
+                65 => self.player.velocity.x -= 1., // left
+                68 => self.player.velocity.x += 1., // right
                 _ => {}
             }
             log!("{:?}", unsafe { GLOBAL_KEY });
         }
+
+        // Apply velocity
+        self.player.position.y += self.player.velocity.y;
+        self.player.position.x += self.player.velocity.x;
     }
 
     fn draw(&self) {
