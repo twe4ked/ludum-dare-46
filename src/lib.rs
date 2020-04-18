@@ -58,6 +58,7 @@ struct State {
     context: web_sys::CanvasRenderingContext2d,
     player: Player,
     floor: Block,
+    timestamp: i32,
 }
 
 impl State {
@@ -77,10 +78,18 @@ impl State {
             context,
             player,
             floor,
+            timestamp: 0,
         }
     }
 
-    fn update(&mut self, _timestamp: i32) {
+    fn update(&mut self, timestamp: i32) {
+        let delta = match self.timestamp {
+            0 => 1,
+            x => timestamp - x,
+        } as f32;
+        self.timestamp = timestamp;
+        log!("{}", delta);
+
         if let Some(key_code) = unsafe { GLOBAL_KEY } {
             match key_code {
                 87 => self.player.velocity.y -= 1., // up
