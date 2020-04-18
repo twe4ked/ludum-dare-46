@@ -24,12 +24,12 @@ fn document() -> web_sys::Document {
 }
 
 struct Point {
-    x: f64,
-    y: f64,
+    x: f32,
+    y: f32,
 }
 
 impl Point {
-    fn new(x: f64, y: f64) -> Self {
+    fn new(x: f32, y: f32) -> Self {
         Self { x, y }
     }
 }
@@ -86,8 +86,8 @@ impl State {
         // Draw the outer circle.
         self.context
             .arc(
-                self.player.position.x + 50.0,
-                self.player.position.y + 50.0,
+                self.player.position.x as f64 + 50.0,
+                self.player.position.y as f64 + 50.0,
                 50.0,
                 0.0,
                 f64::consts::PI * 2.0,
