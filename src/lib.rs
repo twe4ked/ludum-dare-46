@@ -1,3 +1,4 @@
+use legion::prelude::*;
 use std::cell::RefCell;
 use std::f64;
 use std::rc::Rc;
@@ -39,13 +40,6 @@ impl Point {
 }
 
 #[derive(Debug)]
-struct Block {
-    position: Point,
-    width: f32,
-    height: f32,
-}
-
-#[derive(Debug)]
 struct Player {
     position: Point,
     velocity: Point,
@@ -54,16 +48,44 @@ struct Player {
     jumping: f32,
 }
 
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Position {
+    x: f32,
+    y: f32,
+}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Rect {
+    width: f32,
+    height: f32,
+}
+
 struct State {
     context: web_sys::CanvasRenderingContext2d,
     player: Player,
-    floor: Block,
     timestamp: i32,
+    world: World,
 }
 
 impl State {
     fn new(context: web_sys::CanvasRenderingContext2d) -> Self {
+        let universe = Universe::new();
+        let mut world = universe.create_world();
+
+        world.insert(
+            (),
+            vec![(
+                Position {
+                    x: 10.,
+                    y: HEIGHT as f32 - 22.,
+                },
+                Rect {
+                    width: WIDTH as f32,
+                    height: 20.,
+                },
+            )],
+        );
+
         let player = Player {
             position: Point::new(10., 10.),
             velocity: Point::new(0., 0.),
@@ -71,15 +93,11 @@ impl State {
             height: 60.,
             jumping: 0.,
         };
-        let floor = Block {
-            position: Point::new(0., HEIGHT as f32 - 22.),
-            width: WIDTH as f32,
-            height: 20.,
-        };
+
         Self {
             context,
             player,
-            floor,
+            world,
             timestamp: 0,
         }
     }
@@ -141,22 +159,25 @@ impl State {
         self.player.position.y += self.player.velocity.y;
         self.player.position.x += self.player.velocity.x;
 
-        if collision(
-            self.player.position.x,
-            self.player.position.y,
-            self.player.width,
-            self.player.height,
-            self.floor.position.x,
-            self.floor.position.y,
-            self.floor.width,
-            self.floor.height,
-        ) {
-            self.player.position.y -= self.player.velocity.y;
-            self.player.velocity.y = 0.0;
+        let query = <(Read<Position>, Read<Rect>)>::query();
+        for (position, rect) in query.iter(&mut self.world) {
+            if collision(
+                self.player.position.x,
+                self.player.position.y,
+                self.player.width,
+                self.player.height,
+                position.x,
+                position.y,
+                rect.width,
+                rect.height,
+            ) {
+                self.player.position.y -= self.player.velocity.y;
+                self.player.velocity.y = 0.0;
+            }
         }
     }
 
-    fn draw(&self) {
+    fn draw(&mut self) {
         self.context.clear_rect(
             0.,
             0.,
@@ -172,13 +193,15 @@ impl State {
             self.player.height as f64,
         );
 
-        // Draw floor
-        self.context.fill_rect(
-            self.floor.position.x as f64,
-            self.floor.position.y as f64,
-            self.floor.width as f64,
-            self.floor.height as f64,
-        );
+        let query = <(Read<Position>, Read<Rect>)>::query();
+        for (position, rect) in query.iter(&mut self.world) {
+            self.context.fill_rect(
+                position.x as f64,
+                position.y as f64,
+                rect.width as f64,
+                rect.height as f64,
+            );
+        }
 
         ()
     }
