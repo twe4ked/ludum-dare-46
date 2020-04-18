@@ -35,8 +35,13 @@ impl Point {
     }
 }
 
+struct Player {
+    position: Point,
+}
+
 struct State {
     context: web_sys::CanvasRenderingContext2d,
+    player: Player,
 }
 
 impl State {
@@ -52,25 +57,13 @@ impl State {
 
         // Draw the outer circle.
         self.context
-            .arc(75.0, 75.0, 50.0, 0.0, f64::consts::PI * 2.0)
-            .unwrap();
-
-        // Draw the mouth.
-        self.context.move_to(110.0, 75.0);
-        self.context
-            .arc(75.0, 75.0, 35.0, 0.0, f64::consts::PI)
-            .unwrap();
-
-        // Draw the left eye.
-        self.context.move_to(65.0, 65.0);
-        self.context
-            .arc(60.0, 65.0, 5.0, 0.0, f64::consts::PI * 2.0)
-            .unwrap();
-
-        // Draw the right eye.
-        self.context.move_to(95.0, 65.0);
-        self.context
-            .arc(90.0, 65.0, 5.0, 0.0, f64::consts::PI * 2.0)
+            .arc(
+                self.player.position.x + 50.0,
+                self.player.position.y + 50.0,
+                50.0,
+                0.0,
+                f64::consts::PI * 2.0,
+            )
             .unwrap();
 
         self.context.stroke();
@@ -96,7 +89,10 @@ pub fn start() {
         .dyn_into::<web_sys::CanvasRenderingContext2d>()
         .unwrap();
 
-    let state = State { context };
+    let player = Player {
+        position: Point::new(10., 10.),
+    };
+    let state = State { context, player };
 
     *g.borrow_mut() = Some(Closure::wrap(Box::new(move || {
         state.draw();
