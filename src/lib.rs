@@ -109,8 +109,12 @@ pub fn start() {
     let g = f.clone();
 
     let canvas = document().get_element_by_id("canvas").unwrap();
-    canvas.set_attribute("width", &format!("{}", WIDTH));
-    canvas.set_attribute("height", &format!("{}", HEIGHT));
+    canvas
+        .set_attribute("width", &format!("{}", WIDTH))
+        .unwrap();
+    canvas
+        .set_attribute("height", &format!("{}", HEIGHT))
+        .unwrap();
     let canvas: web_sys::HtmlCanvasElement = canvas
         .dyn_into::<web_sys::HtmlCanvasElement>()
         .map_err(|_| ())
