@@ -123,7 +123,9 @@ impl State {
             self.floor.position.y as f64,
             self.floor.width as f64,
             self.floor.height as f64,
-        )
+        );
+
+        ()
     }
 }
 
