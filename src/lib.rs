@@ -129,7 +129,6 @@ pub fn start() {
         state.update(timestamp);
         state.draw();
 
-        // Schedule ourself for another requestAnimationFrame callback.
         request_animation_frame(f.borrow().as_ref().unwrap());
     }) as Box<dyn FnMut(i32)>));
 
