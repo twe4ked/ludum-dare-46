@@ -6,6 +6,10 @@ use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::KeyboardEvent;
 
+mod entities;
+
+use entities::*;
+
 static mut GLOBAL_KEY: Option<u32> = None;
 
 const WIDTH: i32 = 800;
@@ -25,32 +29,6 @@ fn document() -> web_sys::Document {
     window()
         .document()
         .expect("should have a document on window")
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Wall {}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Player {
-    jumping: f32,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Position {
-    x: f32,
-    y: f32,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Rect {
-    width: f32,
-    height: f32,
-}
-
-#[derive(Clone, Copy, Debug, PartialEq)]
-struct Velocity {
-    dx: f32,
-    dy: f32,
 }
 
 struct State {
