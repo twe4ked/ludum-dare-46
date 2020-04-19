@@ -16,16 +16,19 @@ impl State {
         let universe = Universe::new();
         let mut world = universe.create_world();
 
+        let height = HEIGHT as f32;
+        let width = WIDTH as f32;
+
         // Floor
         world.insert(
             (),
             vec![(
                 Position {
                     x: 10.,
-                    y: HEIGHT as f32 - 30.,
+                    y: height - 30.,
                 },
                 Rect {
-                    width: WIDTH as f32 - 20.,
+                    width: width - 20.,
                     height: 20.,
                 },
                 Wall {},
@@ -35,13 +38,32 @@ impl State {
         world.insert(
             (),
             vec![(
-                Position { x: 10., y: 10. },
+                Position {
+                    x: 10.,
+                    y: height - 100.,
+                },
                 Velocity { dx: 0., dy: 0. },
                 Rect {
                     width: 60.,
                     height: 60.,
                 },
                 Player { jumping: true },
+            )],
+        );
+
+        world.insert(
+            (),
+            vec![(
+                Position {
+                    x: width / 2.,
+                    y: 10.,
+                },
+                Velocity { dx: 0., dy: 0. },
+                Rect {
+                    width: 20.,
+                    height: 20.,
+                },
+                Ball {},
             )],
         );
 

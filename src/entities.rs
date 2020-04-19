@@ -2,6 +2,9 @@
 pub struct Wall {}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
+pub struct Ball {}
+
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Player {
     pub jumping: bool,
 }
