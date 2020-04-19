@@ -27,24 +27,11 @@ fn document() -> web_sys::Document {
         .expect("should have a document on window")
 }
 
-#[derive(Debug)]
-struct Point {
-    x: f32,
-    y: f32,
-}
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Wall {}
 
-impl Point {
-    fn new(x: f32, y: f32) -> Self {
-        Self { x, y }
-    }
-}
-
-#[derive(Debug)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 struct Player {
-    position: Point,
-    velocity: Point,
-    width: f32,
-    height: f32,
     jumping: f32,
 }
 
@@ -60,9 +47,14 @@ struct Rect {
     height: f32,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq)]
+struct Velocity {
+    dx: f32,
+    dy: f32,
+}
+
 struct State {
     context: web_sys::CanvasRenderingContext2d,
-    player: Player,
     timestamp: i32,
     world: World,
 }
@@ -83,20 +75,25 @@ impl State {
                     width: WIDTH as f32,
                     height: 20.,
                 },
+                Wall {},
             )],
         );
 
-        let player = Player {
-            position: Point::new(10., 10.),
-            velocity: Point::new(0., 0.),
-            width: 60.,
-            height: 60.,
-            jumping: 0.,
-        };
+        world.insert(
+            (),
+            vec![(
+                Position { x: 10., y: 10. },
+                Velocity { dx: 0., dy: 0. },
+                Rect {
+                    width: 60.,
+                    height: 60.,
+                },
+                Player { jumping: 0. },
+            )],
+        );
 
         Self {
             context,
-            player,
             world,
             timestamp: 0,
         }
@@ -110,69 +107,87 @@ impl State {
         self.timestamp = timestamp;
         log!("{}", delta);
 
-        if let Some(key_code) = unsafe { GLOBAL_KEY } {
-            match key_code {
-                87 => {
-                    // up
+        // Handle input
+        let query = <(Write<Velocity>, Write<Player>)>::query();
+        for (mut velocity, mut player) in query.iter(&mut self.world) {
+            if let Some(key_code) = unsafe { GLOBAL_KEY } {
+                match key_code {
+                    87 => {
+                        // up
 
-                    // We're not jumping, so we can start jumping
-                    if self.player.jumping == 0. {
-                        self.player.jumping = 120.;
-                    }
+                        // We're not jumping, so we can start jumping
+                        if player.jumping == 0. {
+                            player.jumping = 120.;
+                        }
 
-                    if self.player.jumping > 100. {
-                        // keep adding velocity
-                        self.player.velocity.y -= 10.;
+                        if player.jumping > 100. {
+                            // keep adding velocity
+                            velocity.dy -= 10.;
+                        }
                     }
+                    83 => velocity.dy += 1., // down
+                    65 => velocity.dx -= 1., // left
+                    68 => velocity.dx += 1., // right
+                    _ => {}
                 }
-                83 => self.player.velocity.y += 1., // down
-                65 => self.player.velocity.x -= 1., // left
-                68 => self.player.velocity.x += 1., // right
-                _ => {}
+                log!("{:?}", unsafe { GLOBAL_KEY });
             }
-            log!("{:?}", unsafe { GLOBAL_KEY });
+
+            // Jumping
+            player.jumping = clamp(player.jumping - 1.0, 0., 120.);
         }
 
-        // Jumping
-        self.player.jumping = clamp(self.player.jumping - 1.0, 0., 120.);
+        let query = <Write<Velocity>>::query();
+        for mut velocity in query.iter(&mut self.world) {
+            // Gravity
+            velocity.dy += 0.1;
 
-        // Gravity
-        self.player.velocity.y += 0.1;
+            // Friction
+            if velocity.dx > 0. {
+                // moving right
+                velocity.dx -= 0.1;
+                velocity.dx = clamp(velocity.dx, 0., 3.);
+            }
+            if velocity.dx < 0. {
+                // moving left
+                velocity.dx += 0.1;
+                velocity.dx = clamp(velocity.dx, -3., 0.);
+            }
 
-        // Friction
-        if self.player.velocity.x > 0. {
-            // moving right
-            self.player.velocity.x -= 0.1;
-            self.player.velocity.x = clamp(self.player.velocity.x, 0., 3.);
+            // Clamp velocity
+            velocity.dy = clamp(velocity.dy, -3., 3.);
+            velocity.dx = clamp(velocity.dx, -3., 3.);
         }
-        if self.player.velocity.x < 0. {
-            // moving left
-            self.player.velocity.x += 0.1;
-            self.player.velocity.x = clamp(self.player.velocity.x, -3., 0.);
-        }
-
-        // Clamp velocity
-        self.player.velocity.y = clamp(self.player.velocity.y, -3., 3.);
-        self.player.velocity.x = clamp(self.player.velocity.x, -3., 3.);
 
         // Apply velocity
-        self.player.position.y += self.player.velocity.y;
-        self.player.position.x += self.player.velocity.x;
+        let query = <(Write<Position>, Read<Velocity>)>::query();
+        for (mut position, velocity) in query.iter(&mut self.world) {
+            position.y += velocity.dy;
+            position.x += velocity.dx;
+        }
 
-        let query = <(Read<Position>, Read<Rect>)>::query();
-        for (position, rect) in query.iter(&mut self.world) {
-            if collision(
-                self.player.position.x,
-                self.player.position.y,
-                self.player.width,
-                self.player.height,
-                position.x,
-                position.y,
-                rect.width,
-                rect.height,
-            ) {
-                self.player.position.y -= self.player.velocity.y;
-                self.player.velocity.y = 0.0;
+        let query = <(Read<Position>, Read<Rect>)>::query().filter(!component::<Player>());
+        let static_objects: Vec<(Position, Rect)> = query
+            .iter_immutable(&mut self.world)
+            .map(|(pos, rect)| (*pos, *rect))
+            .collect();
+
+        let query = <(Write<Position>, Read<Rect>, Write<Velocity>, Read<Player>)>::query();
+        for (mut position, rect, mut velocity, _player) in query.iter(&mut self.world) {
+            for (wall_position, wall_rect) in static_objects.iter() {
+                if collision(
+                    position.x,
+                    position.y,
+                    rect.width,
+                    rect.height,
+                    wall_position.x,
+                    wall_position.y,
+                    wall_rect.width,
+                    wall_rect.height,
+                ) {
+                    position.y -= velocity.dy;
+                    velocity.dy = 0.0;
+                }
             }
         }
     }
@@ -183,14 +198,6 @@ impl State {
             0.,
             self.context.canvas().unwrap().width() as f64,
             self.context.canvas().unwrap().height() as f64,
-        );
-
-        // Draw player
-        self.context.fill_rect(
-            self.player.position.x as f64,
-            self.player.position.y as f64,
-            self.player.width as f64,
-            self.player.height as f64,
         );
 
         let query = <(Read<Position>, Read<Rect>)>::query();
