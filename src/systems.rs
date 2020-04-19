@@ -3,19 +3,13 @@ use crate::Direction;
 use legion::prelude::*;
 
 pub fn input(world: &mut World) {
-    // Handle input
     let query = <(Write<Velocity>, Write<Player>)>::query();
     for (mut velocity, mut player) in query.iter(world) {
         let input = crate::GLOBAL_KEY.lock().unwrap();
 
         if input.contains(Direction::Up) {
-            // We're not jumping, so we can start jumping
-            if player.jumping == 0. {
-                player.jumping = 120.;
-            }
-
-            if player.jumping > 100. {
-                // keep adding velocity
+            if !player.jumping {
+                player.jumping = true;
                 velocity.dy -= 10.;
             }
         }
@@ -33,9 +27,6 @@ pub fn input(world: &mut World) {
         }
 
         crate::log!("{:?}", input);
-
-        // Jumping
-        player.jumping = clamp(player.jumping - 1.0, 0., 120.);
     }
 }
 
@@ -78,8 +69,8 @@ pub fn player_collision(world: &mut World) {
         .map(|(pos, rect)| (*pos, *rect))
         .collect();
 
-    let query = <(Write<Position>, Read<Rect>, Write<Velocity>, Read<Player>)>::query();
-    for (mut position, rect, mut velocity, _player) in query.iter(world) {
+    let query = <(Write<Position>, Read<Rect>, Write<Velocity>, Write<Player>)>::query();
+    for (mut position, rect, mut velocity, mut player) in query.iter(world) {
         for (wall_position, wall_rect) in static_objects.iter() {
             if collision(
                 position.x,
@@ -91,6 +82,7 @@ pub fn player_collision(world: &mut World) {
                 wall_rect.width,
                 wall_rect.height,
             ) {
+                player.jumping = false;
                 position.y -= velocity.dy;
                 velocity.dy = 0.0;
             }

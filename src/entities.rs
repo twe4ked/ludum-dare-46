@@ -3,7 +3,7 @@ pub struct Wall {}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Player {
-    pub jumping: f32,
+    pub jumping: bool,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq)]

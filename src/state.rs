@@ -40,7 +40,7 @@ impl State {
                     width: 60.,
                     height: 60.,
                 },
-                Player { jumping: 0. },
+                Player { jumping: true },
             )],
         );
 
