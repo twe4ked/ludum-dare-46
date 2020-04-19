@@ -1,7 +1,9 @@
+use lazy_static::lazy_static;
 use legion::prelude::*;
 use std::cell::RefCell;
 use std::f64;
 use std::rc::Rc;
+use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
 use wasm_bindgen::JsCast;
 use web_sys::KeyboardEvent;
@@ -11,7 +13,9 @@ mod systems;
 
 use entities::*;
 
-pub static mut GLOBAL_KEY: Option<u32> = None;
+lazy_static! {
+    pub static ref GLOBAL_KEY: Mutex<Option<u32>> = Mutex::new(None);
+}
 
 const WIDTH: i32 = 800;
 const HEIGHT: i32 = 600;
@@ -150,14 +154,14 @@ pub fn start() {
         request_animation_frame(f.borrow().as_ref().unwrap());
     }) as Box<dyn FnMut(i32)>));
 
-    let onkeydown_handler = Closure::wrap(Box::new(move |e: KeyboardEvent| unsafe {
-        GLOBAL_KEY = Some(e.key_code());
+    let onkeydown_handler = Closure::wrap(Box::new(move |e: KeyboardEvent| {
+        *GLOBAL_KEY.lock().unwrap() = Some(e.key_code());
     }) as Box<dyn FnMut(KeyboardEvent)>);
     window().set_onkeydown(Some(onkeydown_handler.as_ref().unchecked_ref()));
     onkeydown_handler.forget();
 
-    let onkeyup_handler = Closure::wrap(Box::new(move |_e: KeyboardEvent| unsafe {
-        GLOBAL_KEY = None;
+    let onkeyup_handler = Closure::wrap(Box::new(move |_e: KeyboardEvent| {
+        *GLOBAL_KEY.lock().unwrap() = None;
     }) as Box<dyn FnMut(KeyboardEvent)>);
     window().set_onkeyup(Some(onkeyup_handler.as_ref().unchecked_ref()));
     onkeyup_handler.forget();

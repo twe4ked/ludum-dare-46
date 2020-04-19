@@ -5,7 +5,8 @@ pub fn input(world: &mut World) {
     // Handle input
     let query = <(Write<Velocity>, Write<Player>)>::query();
     for (mut velocity, mut player) in query.iter(world) {
-        if let Some(key_code) = unsafe { crate::GLOBAL_KEY } {
+        let input = crate::GLOBAL_KEY.lock().unwrap();
+        if let Some(key_code) = *input {
             match key_code {
                 87 => {
                     // up
@@ -25,7 +26,7 @@ pub fn input(world: &mut World) {
                 68 => velocity.dx += 1., // right
                 _ => {}
             }
-            crate::log!("{:?}", unsafe { crate::GLOBAL_KEY });
+            crate::log!("{:?}", input);
         }
 
         // Jumping
