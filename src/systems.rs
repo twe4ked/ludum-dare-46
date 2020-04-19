@@ -1,4 +1,5 @@
 use crate::entities::*;
+use crate::Direction;
 use legion::prelude::*;
 
 pub fn input(world: &mut World) {
@@ -6,28 +7,32 @@ pub fn input(world: &mut World) {
     let query = <(Write<Velocity>, Write<Player>)>::query();
     for (mut velocity, mut player) in query.iter(world) {
         let input = crate::GLOBAL_KEY.lock().unwrap();
-        if let Some(key_code) = *input {
-            match key_code {
-                87 => {
-                    // up
 
-                    // We're not jumping, so we can start jumping
-                    if player.jumping == 0. {
-                        player.jumping = 120.;
-                    }
-
-                    if player.jumping > 100. {
-                        // keep adding velocity
-                        velocity.dy -= 10.;
-                    }
-                }
-                83 => velocity.dy += 1., // down
-                65 => velocity.dx -= 1., // left
-                68 => velocity.dx += 1., // right
-                _ => {}
+        if input.contains(Direction::Up) {
+            // We're not jumping, so we can start jumping
+            if player.jumping == 0. {
+                player.jumping = 120.;
             }
-            crate::log!("{:?}", input);
+
+            if player.jumping > 100. {
+                // keep adding velocity
+                velocity.dy -= 10.;
+            }
         }
+
+        if input.contains(Direction::Up) {
+            velocity.dy += 1.
+        }
+
+        if input.contains(Direction::Left) {
+            velocity.dx -= 1.
+        }
+
+        if input.contains(Direction::Right) {
+            velocity.dx += 1.
+        }
+
+        crate::log!("{:?}", input);
 
         // Jumping
         player.jumping = clamp(player.jumping - 1.0, 0., 120.);

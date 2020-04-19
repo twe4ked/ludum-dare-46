@@ -1,5 +1,7 @@
+use enumset::{EnumSet, EnumSetType};
 use lazy_static::lazy_static;
 use std::cell::RefCell;
+use std::convert::TryFrom;
 use std::rc::Rc;
 use std::sync::Mutex;
 use wasm_bindgen::prelude::*;
@@ -13,7 +15,7 @@ mod systems;
 use state::State;
 
 lazy_static! {
-    pub static ref GLOBAL_KEY: Mutex<Option<u32>> = Mutex::new(None);
+    pub static ref GLOBAL_KEY: Mutex<EnumSet<Direction>> = Mutex::new(EnumSet::empty());
 }
 
 const WIDTH: i32 = 800;
@@ -33,6 +35,30 @@ fn document() -> web_sys::Document {
     window()
         .document()
         .expect("should have a document on window")
+}
+
+#[derive(Debug, EnumSetType)]
+pub enum Direction {
+    Up,
+    Down,
+    Left,
+    Right,
+}
+
+impl TryFrom<u32> for Direction {
+    type Error = ();
+
+    fn try_from(key_code: u32) -> Result<Self, Self::Error> {
+        use Direction::*;
+
+        match key_code {
+            87 => Ok(Up),
+            83 => Ok(Down),
+            65 => Ok(Left),
+            68 => Ok(Right),
+            _ => Err(()),
+        }
+    }
 }
 
 #[wasm_bindgen(start)]
@@ -71,13 +97,17 @@ pub fn start() {
     }) as Box<dyn FnMut(i32)>));
 
     let onkeydown_handler = Closure::wrap(Box::new(move |e: KeyboardEvent| {
-        *GLOBAL_KEY.lock().unwrap() = Some(e.key_code());
+        if let Ok(direction) = Direction::try_from(e.key_code()) {
+            *GLOBAL_KEY.lock().unwrap() |= direction
+        }
     }) as Box<dyn FnMut(KeyboardEvent)>);
     window().set_onkeydown(Some(onkeydown_handler.as_ref().unchecked_ref()));
     onkeydown_handler.forget();
 
-    let onkeyup_handler = Closure::wrap(Box::new(move |_e: KeyboardEvent| {
-        *GLOBAL_KEY.lock().unwrap() = None;
+    let onkeyup_handler = Closure::wrap(Box::new(move |e: KeyboardEvent| {
+        if let Ok(direction) = Direction::try_from(e.key_code()) {
+            *GLOBAL_KEY.lock().unwrap() ^= direction
+        }
     }) as Box<dyn FnMut(KeyboardEvent)>);
     window().set_onkeyup(Some(onkeyup_handler.as_ref().unchecked_ref()));
     onkeyup_handler.forget();
