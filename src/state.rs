@@ -16,15 +16,16 @@ impl State {
         let universe = Universe::new();
         let mut world = universe.create_world();
 
+        // Floor
         world.insert(
             (),
             vec![(
                 Position {
                     x: 10.,
-                    y: HEIGHT as f32 - 22.,
+                    y: HEIGHT as f32 - 30.,
                 },
                 Rect {
-                    width: WIDTH as f32,
+                    width: WIDTH as f32 - 20.,
                     height: 20.,
                 },
                 Wall {},
